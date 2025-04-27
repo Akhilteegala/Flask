@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Truncate Stage</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; margin: 0; background-color: #f8f9fa; }
+        h2 { text-align: center; margin-top: 20px; color: #0056b3; font-size: 28px; }
+        .container { display: flex; height: calc(100vh - 100px); }
+        .form-section, .json-section { flex: 1; padding: 20px; overflow-y: auto; }
+        .form-section { background-color: #ffffff; border-right: 1px solid #dee2e6; }
+        .json-section { background-color: #ffffff; }
+        form { display: flex; flex-direction: column; gap: 15px; }
+        input[type="text"] { padding: 12px; font-size: 16px; border: 1px solid #ced4da; border-radius: 8px; }
+        button { padding: 14px; background-color: #007BFF; color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 18px; cursor: pointer; transition: all 0.3s ease; }
+        button:hover { background-color: #0056b3; transform: scale(1.05); }
+        pre { background: #f1f3f5; padding: 20px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); height: 100%; width: 100%; overflow-x: auto; font-size: 14px; }
+        .buttons { display: flex; gap: 15px; margin-top: 20px; }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = document.querySelectorAll('input[name="trgt_table_name"], input[name="step_cmd_script"]');
+            inputs.forEach(input => {
+                input.addEventListener('input', updatePreview);
+            });
+        });
+
+        async function updatePreview() {
+            const trgt_table_name = document.querySelector('input[name="trgt_table_name"]').value;
+            const step_cmd_script = document.querySelector('input[name="step_cmd_script"]').value;
+
+            try {
+                const response = await fetch('/preview_truncate_live', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ trgt_table_name, step_cmd_script })
+                });
+
+                if (!response.ok) throw new Error('Preview fetch failed');
+                const wrappedPreview = await response.json();
+                document.getElementById('json-preview').textContent = JSON.stringify(wrappedPreview, null, 4);
+            } catch (error) {
+                console.error('Error updating preview:', error);
+            }
+        }
+
+        async function saveTruncate() {
+            const trgt_table_name = document.querySelector('input[name="trgt_table_name"]').value;
+            const step_cmd_script = document.querySelector('input[name="step_cmd_script"]').value;
+
+            const response = await fetch('/save_truncate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ trgt_table_name, step_cmd_script })
+            });
+
+            if (response.ok) {
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'Truncate Stage Saved Successfully!',
+                    icon: 'success',
+                    confirmButtonText: 'Awesome!'
+                });
+            } else {
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'Error saving Truncate Stage',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            }
+        }
+
+        function goToStageLoad() {
+            window.location.href = "/add_stage_load";
+        }
+    </script>
+</head>
+
+<body>
+
+<h2>Add Truncate Stage</h2>
+
+<div class="container">
+    <div class="form-section">
+        <form id="truncateForm">
+            <label>Target Table Name:</label>
+            <input type="text" name="trgt_table_name" required>
+
+            <label>Step Command Script:</label>
+            <input type="text" name="step_cmd_script" value="dscl/stg_ld/rshft_trunc_stgg_table.sql" required>
+
+            <div class="buttons">
+                <button type="button" onclick="saveTruncate()">Save Truncate Stage</button>
+                <button type="button" onclick="goToStageLoad()">Continue to Stage Load ➡️</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="json-section">
+        <h3>Live Truncate Stage Preview</h3>
+        <pre id="json-preview">{}</pre>
+    </div>
+</div>
+
+</body>
+</html>

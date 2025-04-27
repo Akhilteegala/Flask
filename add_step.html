@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Step to {{ group_name }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+    </style>
+</head>
+<body>
+
+<h2>Add Step to Group: {{ group_name }}</h2>
+
+<form method="post">
+    step_name: <input type="text" name="step_name" required><br><br>
+    report_step_exec: <input type="text" name="report_step_exec" required><br><br>
+    log_step_exec: <input type="text" name="log_step_exec" required><br><br>
+    src_table_name: <input type="text" name="src_table_name" required><br><br>
+    trgt_table_name: <input type="text" name="trgt_table_name" required><br><br>
+    trgt_tab_col_list (comma separated): <input type="text" name="trgt_tab_col_list"><br><br>
+    step_seq_no: <input type="number" name="step_seq_no" required><br><br>
+    step_cmd_type: <input type="text" name="step_cmd_type" value="sql" required><br><br>
+    step_cmd_script: <input type="text" name="step_cmd_script" required><br><br>
+    step_cmd_script_exec_type: <input type="text" name="step_cmd_script_exec_type" value="proc" required><br><br>
+    step_cmd_script_args (comma separated): <input type="text" name="step_cmd_script_args"><br><br>
+    step_abc_qry: <input type="text" name="step_abc_qry"><br><br>
+    step_mnfst_qry: <input type="text" name="step_mnfst_qry"><br><br>
+
+    Add another step?
+    <select name="add_another_step">
+        <option value="yes">Yes</option>
+        <option value="no">No</option>
+    </select><br><br>
+
+    <input type="submit" value="Save Step">
+</form>
+
+</body>
+</html>
