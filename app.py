@@ -72,8 +72,8 @@ def save_truncate():
     data = request.json
     trgt_table_name = data.get('trgt_table_name')
     step_cmd_script = data.get('step_cmd_script')
+    step_group_seq_no = data.get('step_group_seq_no') or "1"
 
-    # ✅ Check if session has event_name
     event_name = session.get('event_name')
 
     if not event_name:
@@ -86,7 +86,7 @@ def save_truncate():
         ("skip_group_exec", "False"),
         ("step_exec_mode", "parallel"),
         ("step_group_name", "truncate_stage"),
-        ("step_group_seq_no", "1"),
+        ("step_group_seq_no", str(step_group_seq_no)),
         ("steps", [
             OrderedDict([
                 ("step_name", "truncate_stage"),
@@ -111,13 +111,11 @@ def save_truncate():
     if 'event_configs' not in session:
         session['event_configs'] = {event_name: []}
 
-    existing_blocks = session['event_configs'][event_name]
-    new_blocks = [b for b in existing_blocks if b.get('step_group_name') != "truncate_stage"]
-    new_blocks.append(truncate_json)
-    session['event_configs'][event_name] = new_blocks
+    session['event_configs'][event_name].append(truncate_json)
     session.modified = True
 
     return '', 200
+
 
 
 @app.route('/save_stage_load', methods=['POST'])
@@ -174,6 +172,7 @@ def preview_truncate_live():
     data = request.json
     trgt_table_name = data.get('trgt_table_name', '')
     step_cmd_script = data.get('step_cmd_script', '')
+    step_group_seq_no = data.get('step_group_seq_no', '')
 
     truncate_block = OrderedDict([
         ("exec_pre_condition", ""),
@@ -182,7 +181,7 @@ def preview_truncate_live():
         ("skip_group_exec", "False"),
         ("step_exec_mode", "parallel"),
         ("step_group_name", "truncate_stage"),
-        ("step_group_seq_no", "1"),
+        ("step_group_seq_no", str(step_group_seq_no)),
         ("steps", [
             OrderedDict([
                 ("step_name", "truncate_stage"),
@@ -204,25 +203,23 @@ def preview_truncate_live():
         ])
     ])
 
-    # ✅ Check if event_configs exists
     event_name = session.get('event_name')
-    saved_blocks = []
+    saved_blocks = session['event_configs'].get(event_name, [])
+    full_preview_blocks = saved_blocks + [truncate_block]
 
-    if 'event_configs' in session and event_name:
-        saved_blocks = session['event_configs'].get(event_name, [])
-
-    full_preview_blocks = saved_blocks.copy()
-    full_preview_blocks.append(truncate_block)
+    # Sort by step_group_seq_no
+    sorted_blocks = sorted(full_preview_blocks, key=lambda x: int(x.get('step_group_seq_no', 999)))
 
     wrapped_preview = {
         "event_configs": {
-            event_name if event_name else 'default_event': full_preview_blocks
+            event_name: sorted_blocks
         }
     }
 
     response = make_response(json.dumps(wrapped_preview, indent=4))
     response.mimetype = 'application/json'
     return response
+
 
 
 @app.route('/save_base_load', methods=['POST'])
